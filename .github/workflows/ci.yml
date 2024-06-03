@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - feat2-cicd  
+      - feature2-cicd
   pull_request:
     branches:
       - main
-      - feat2-cicd 
+      - feature2-cicd
 
 jobs:
   build_and_test:
@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20' 
+          node-version: '20'
 
       - name: Install dependencies and tools
         run: |
@@ -29,3 +29,19 @@ jobs:
           && npm install mocha
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: docker build . -t qed-challenge
+
+      - name: Run Docker container
+        run: docker run -d --name qed-challenge -p 3000:3000 qed-challenge
+
+      - name: Test Docker container
+        run: |
+          sleep 10 #waiting for the container to be up and running
+          curl --fail http://localhost:3000 || (docker logs qed-challenge && exit 1)
+      - name: Clean up
+        run: docker stop qed-challenge && docker rm qed-challenge
