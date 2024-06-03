@@ -25,7 +25,7 @@ jobs:
 
       - name: Install dependencies and tools
         run: |
-          npm install --no-package-lock \
+          npm install \
           && npm install mocha
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
