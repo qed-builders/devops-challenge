@@ -108,10 +108,10 @@ resource "local_file" "public_key" {
   filename        = "./public_key.pub"  # save public key in the current directory
 }
 
-# output "public_ip" {
-#   value = aws_instance.qed-instance.public_ip
-# }
+output "public_ip" {
+  value = aws_instance.qed-instance.public_ip
+}
 
-# output "private_key" {
-#   value = local_file.private_key.content
-# }
+output "private_key" {
+  value = local_file.private_key.filename
+}
