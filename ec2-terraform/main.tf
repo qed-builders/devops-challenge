@@ -10,9 +10,9 @@ module "qed-ec2" {
 }
 
 output "public_ip" {
-    value = public_ip.public_ip
+    value = module.qed-ec2.aws_instance.qed-instance.public_ip
 }
 
 output "private_key" {
-  value = private_key.content
+  value = module.qed-ec2.local_file.private_key.filename
 }
