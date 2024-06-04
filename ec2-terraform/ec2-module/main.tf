@@ -107,3 +107,7 @@ resource "local_file" "public_key" {
   content         = tls_private_key.qed_private_key.public_key_openssh
   filename        = "./public_key.pub"  # save public key in the current directory
 }
+
+output "public_ip" {
+  value = "aws_instance.qed-instance.public_ip"
+}
