@@ -25,15 +25,15 @@ jobs:
 
       - name: Install dependencies and tools
         run: |
-            npm install \
-            && npm install mocha
-            
+          npm install \
+          && npm install mocha
+
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
-          
+
       - name: Install dependencies and tools
         run: npm install
-  
+
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
 
@@ -98,13 +98,18 @@ jobs:
         id: extract-outputs
         run: |
           terraform output -json > outputs.json
+          pwd
+          ls -l
           cat outputs.json
 
       - name: Read EC2 Details
         id: read-ec2-details
+        working-directory: ./ec2-terraform
         run: |
+          pwd
+          ls -l
           PUBLIC_IP=$(jq -r '.public_ip.value' outputs.json)
-          PRIVATE_KEY_PATH=$(jq -r '.private_key_path.value' outputs.json)
+          PRIVATE_KEY_PATH=$(jq -r '.private_key.value' outputs.json)
           echo "::set-output name=public_ip::$PUBLIC_IP"
           echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
 
