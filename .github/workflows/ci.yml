@@ -93,6 +93,9 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform apply -auto-approve tfplan
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Extract Terraform Outputs
         working-directory: ./ec2-terraform
         id: extract-outputs
@@ -100,9 +103,9 @@ jobs:
           terraform output -json > outputs.json
           pwd
           ls -lahtr
-          cat outputs.json
+          cat outputs.json 
           cat private_key.pem
-
+          jq . outputs.json
 
       - name: Read EC2 Details
         id: read-ec2-details
