@@ -114,4 +114,5 @@ output "public_ip" {
 
 output "private_key" {
   value = local_file.private_key.content
+  sensitive = true
 }
