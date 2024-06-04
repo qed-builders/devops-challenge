@@ -112,7 +112,6 @@ output "public_ip" {
   value = aws_instance.qed-instance.public_ip
 }
 
-output "private_key" {
-  value = local_file.private_key.content
-  sensitive = true
-}
+# output "private_key" {
+#   value = local_file.private_key.content
+# }
