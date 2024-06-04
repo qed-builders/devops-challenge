@@ -23,10 +23,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies and tools
+      - name: Update npm dependencies
         run: |
-          npm install \
-          && npm install mocha
+          npm install -g npm-check-updates
+          npx npm-check-updates -u
+          npm install
+
+      - name: Install dependencies and tools
+        run: npm install
 
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
@@ -60,7 +64,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.5
+          terraform_version: 1.5.5 
 
       - name: Terraform Init
         working-directory: ./ec2-terraform
@@ -82,10 +86,31 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform apply -auto-approve tfplan
-        
+
       - name: Extract Terraform Outputs
         working-directory: ./ec2-terraform
         id: extract-outputs
         run: |
           terraform output -json > outputs.json
           cat outputs.json
+
+      - name: Read EC2 Details
+        id: read-ec2-details
+        run: |
+          PUBLIC_IP=$(jq -r '.public_ip.value' outputs.json)
+          PRIVATE_KEY_PATH=$(jq -r '.private_key_path.value' outputs.json)
+          echo "::set-output name=public_ip::$PUBLIC_IP"
+          echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
+
+      - name: Deploy to EC2
+        run: |
+          PUBLIC_IP=${{ steps.read-ec2-details.outputs.public_ip }}
+          PRIVATE_KEY_PATH=${{ steps.read-ec2-details.outputs.private_key_path }}
+          scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP:/home/ec2-user/key.pem
+          ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP << 'EOF'
+            sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+            sudo docker stop qed-challenge || true
+            sudo docker rm qed-challenge || true
+            sudo docker run -d --name qed-challenge -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+          EOF
