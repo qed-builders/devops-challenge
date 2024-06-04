@@ -23,15 +23,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Update npm dependencies
+      - name: Install dependencies and tools
         run: |
-          npm install -g npm-check-updates
-          npx npm-check-updates -u
-          npm install
-
+            npm install \
+            && npm install mocha
+            
+      - name: Run tests with Mocha
+        run: ./node_modules/.bin/mocha app.js
+          
       - name: Install dependencies and tools
         run: npm install
-
+  
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
 
