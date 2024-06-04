@@ -103,7 +103,9 @@ jobs:
           terraform output -json > outputs.json
           pwd
           ls -lahtr
-          cat outputs.json 
+          echo "Contents of outputs.json:"
+          cat outputs.json
+          echo "Contents of private_key.pem:"
           cat private_key.pem
           jq . outputs.json
 
