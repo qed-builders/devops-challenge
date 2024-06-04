@@ -23,12 +23,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Update npm dependencies
-        run: |
-          npm install -g npm-check-updates
-          npx npm-check-updates -u
-          npm install
-
       - name: Install dependencies and tools
         run: npm install
 
