@@ -9,6 +9,10 @@ module "qed-ec2" {
 
 }
 
-  output "public_ip" {
-    value = "public_ip.public_ip"
-  }
+output "public_ip" {
+    value = public_ip.public_ip
+}
+
+output "private_key" {
+  value = private_key.content
+}
