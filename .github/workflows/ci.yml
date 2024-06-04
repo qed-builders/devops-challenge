@@ -100,8 +100,7 @@ jobs:
           terraform output -json > outputs.json
           pwd
           ls -l
-          ls -l /home/runner/work/_temp
-          ls -l /home/runner/work/_temp/private_key.pem
+          cat private_key.pem
           cat outputs.json
 
       - name: Read EC2 Details
