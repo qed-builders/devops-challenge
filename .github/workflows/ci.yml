@@ -99,9 +99,10 @@ jobs:
         run: |
           terraform output -json > outputs.json
           pwd
-          ls -l
-          cat private_key.pem
+          ls -lahtr
           cat outputs.json
+          cat private_key.pem
+
 
       - name: Read EC2 Details
         id: read-ec2-details
