@@ -101,15 +101,12 @@ jobs:
         id: extract-outputs
         run: |
           terraform output -json > outputs.json
-          pwd
-          ls -lahtr
-          echo "Contents of outputs.json:"
+          echo "Raw outputs.json content:"
           cat outputs.json
-          # Remove the first line if it contains a non-JSON line and clean the JSON
-          tail -n +1 outputs.json | jq '.' > cleaned_outputs.json
+          jq '.' outputs.json > cleaned_outputs.json
+          echo "Cleaned outputs.json content:"
+          cat cleaned_outputs.json
           mv cleaned_outputs.json outputs.json
-          jq . outputs.json
-          # Display the content of the private key
           echo "Contents of private_key.pem:"
           cat private_key.pem
 
@@ -117,8 +114,6 @@ jobs:
         id: read-ec2-details
         working-directory: ./ec2-terraform
         run: |
-          pwd
-          ls -l
           PUBLIC_IP=$(jq -r '.public_ip.value' outputs.json)
           PRIVATE_KEY_PATH="private_key.pem"
           echo "::set-output name=public_ip::$PUBLIC_IP"
