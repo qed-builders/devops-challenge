@@ -31,12 +31,6 @@ jobs:
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
 
-      - name: Install dependencies and tools
-        run: npm install
-
-      - name: Run tests with Mocha
-        run: ./node_modules/.bin/mocha app.js
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -98,7 +92,7 @@ jobs:
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
           echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-        shell: bash
+          echo "Public IP: $PUBLIC_IP"
 
       - name: Read EC2 Details
         id: read-ec2-details
