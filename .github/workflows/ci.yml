@@ -100,10 +100,10 @@ jobs:
         working-directory: ./ec2-terraform
         id: extract-outputs
         run: |
-          terraform output -json > outputs.json
+          terraform output -json > raw_outputs.json
           echo "Raw outputs.json content:"
-          cat outputs.json
-          jq '.' outputs.json > cleaned_outputs.json
+          cat raw_outputs.json
+          grep -Eo '\{.*' raw_outputs.json | jq '.' > cleaned_outputs.json
           echo "Cleaned outputs.json content:"
           cat cleaned_outputs.json
           mv cleaned_outputs.json outputs.json
