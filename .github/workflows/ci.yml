@@ -27,6 +27,11 @@ jobs:
         run: |
           npm install \
           && npm install mocha
+      - name: Run tests with Mocha
+        run: ./node_modules/.bin/mocha app.js
+
+      - name: Install dependencies and tools
+        run: npm install
 
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
@@ -44,7 +49,6 @@ jobs:
         run: |
           sleep 10 # waiting for the container to be up and running
           curl --fail http://localhost:3000 || (docker logs qed-challenge && exit 1)
-
       - name: Clean up
         run: docker stop qed-challenge && docker rm qed-challenge
 
@@ -91,20 +95,22 @@ jobs:
         id: extract-outputs
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          echo "::set-output name=public_ip::$PUBLIC_IP"
           echo "Public IP: $PUBLIC_IP"
 
       - name: Read EC2 Details
         id: read-ec2-details
         working-directory: ./ec2-terraform
         run: |
+          PUBLIC_IP=$(terraform output -raw public_ip)
           PRIVATE_KEY_PATH="private_key.pem"
-          echo "PRIVATE_KEY_PATH=$PRIVATE_KEY_PATH" >> $GITHUB_ENV
-
+          echo "::set-output name=public_ip::$PUBLIC_IP"
+          echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
+          
       - name: Deploy to EC2
         run: |
-          PUBLIC_IP=${{ env.PUBLIC_IP }}
-          PRIVATE_KEY_PATH=${{ env.PRIVATE_KEY_PATH }}
+          PUBLIC_IP=${{ steps.read-ec2-details.outputs.public_ip }}
+          PRIVATE_KEY_PATH=${{ steps.read-ec2-details.outputs.private_key_path }}
           scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP:/home/ec2-user/key.pem
           ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP << 'EOF'
             sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
