@@ -104,7 +104,6 @@ jobs:
         id: read-ec2-details
         working-directory: ./ec2-terraform
         run: |
-          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           PRIVATE_KEY_PATH="private_key.pem"
           echo "PRIVATE_KEY_PATH=$PRIVATE_KEY_PATH" >> $GITHUB_ENV
 
