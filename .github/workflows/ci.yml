@@ -105,10 +105,13 @@ jobs:
           ls -lahtr
           echo "Contents of outputs.json:"
           cat outputs.json
-          # Filter out non-JSON lines and clean the JSON
-          grep -E '^\{|\[' outputs.json | jq '.' > cleaned_outputs.json
+          # Remove the first line if it contains a non-JSON line and clean the JSON
+          tail -n +1 outputs.json | jq '.' > cleaned_outputs.json
           mv cleaned_outputs.json outputs.json
           jq . outputs.json
+          # Display the content of the private key
+          echo "Contents of private_key.pem:"
+          cat private_key.pem
 
       - name: Read EC2 Details
         id: read-ec2-details
@@ -117,7 +120,7 @@ jobs:
           pwd
           ls -l
           PUBLIC_IP=$(jq -r '.public_ip.value' outputs.json)
-          PRIVATE_KEY_PATH=$(jq -r '.private_key.value' outputs.json)
+          PRIVATE_KEY_PATH="private_key.pem"
           echo "::set-output name=public_ip::$PUBLIC_IP"
           echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
 
