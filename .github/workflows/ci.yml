@@ -105,8 +105,8 @@ jobs:
           ls -lahtr
           echo "Contents of outputs.json:"
           cat outputs.json
-          echo "Contents of private_key.pem:"
-          cat private_key.pem
+          jq '.' outputs.json > cleaned_outputs.json
+          mv cleaned_outputs.json outputs.json
           jq . outputs.json
 
       - name: Read EC2 Details
