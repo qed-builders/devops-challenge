@@ -91,17 +91,16 @@ jobs:
 
       - name: Print Terraform Output
         run: cat ec2-terraform/terraform_output.txt
-          
-      - name: Debug Grep Command
-        run: |
-          grep_result=$(grep -oP 'public_ip = "\K[^"]+' ec2-terraform/terraform_output.txt)
-          echo "Grep Result: $grep_result"
 
       - name: Print Private Key Content
         run: |
           cat private_key.pem
           echo "Contents of private_key.pem:"
           
+      - name: Debug Grep Command
+        run: |
+          grep_result=$(grep -oP 'public_ip = "\K[^"]+' ec2-terraform/terraform_output.txt)
+          echo "Grep Result: $grep_result"
 
       - name: setting env
         run: |
