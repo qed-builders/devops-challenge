@@ -105,7 +105,8 @@ jobs:
           ls -lahtr
           echo "Contents of outputs.json:"
           cat outputs.json
-          jq '.' outputs.json > cleaned_outputs.json
+          # Filter out non-JSON lines and clean the JSON
+          grep -E '^\{|\[' outputs.json | jq '.' > cleaned_outputs.json
           mv cleaned_outputs.json outputs.json
           jq . outputs.json
 
