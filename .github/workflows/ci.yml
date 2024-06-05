@@ -97,22 +97,21 @@ jobs:
         id: extract-outputs
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
-          echo "::set-output name=public_ip::$PUBLIC_IP"
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           echo "Public IP: $PUBLIC_IP"
 
       - name: Read EC2 Details
         id: read-ec2-details
         working-directory: ./ec2-terraform
         run: |
-          PUBLIC_IP=$(terraform output -raw public_ip)
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
           PRIVATE_KEY_PATH="private_key.pem"
-          echo "::set-output name=public_ip::$PUBLIC_IP"
-          echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
+          echo "PRIVATE_KEY_PATH=$PRIVATE_KEY_PATH" >> $GITHUB_ENV
 
       - name: Deploy to EC2
         run: |
-          PUBLIC_IP=${{ steps.read-ec2-details.outputs.public_ip }}
-          PRIVATE_KEY_PATH=${{ steps.read-ec2-details.outputs.private_key_path }}
+          PUBLIC_IP=${{ env.PUBLIC_IP }}
+          PRIVATE_KEY_PATH=${{ env.PRIVATE_KEY_PATH }}
           scp -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP:/home/ec2-user/key.pem
           ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH ec2-user@$PUBLIC_IP << 'EOF'
             sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
