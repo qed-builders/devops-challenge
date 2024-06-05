@@ -64,8 +64,7 @@ jobs:
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
 
       - name: Delete previous keys
-        run: |
-          rm -rf public_key.pub private_key.pem
+        run: rm -rf public_key.pub private_key.pem
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -93,28 +92,19 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Extract Terraform Outputs
         working-directory: ./ec2-terraform
         id: extract-outputs
         run: |
-          terraform output -json > raw_outputs.json
-          echo "Raw outputs.json content:"
-          cat raw_outputs.json
-          grep -Eo '\{.*' raw_outputs.json | jq '.' > cleaned_outputs.json
-          echo "Cleaned outputs.json content:"
-          cat cleaned_outputs.json
-          mv cleaned_outputs.json outputs.json
-          echo "Contents of private_key.pem:"
-          cat private_key.pem
+          PUBLIC_IP=$(terraform output -raw public_ip)
+          echo "::set-output name=public_ip::$PUBLIC_IP"
+          echo "Public IP: $PUBLIC_IP"
 
       - name: Read EC2 Details
         id: read-ec2-details
         working-directory: ./ec2-terraform
         run: |
-          PUBLIC_IP=$(jq -r '.public_ip.value' outputs.json)
+          PUBLIC_IP=$(terraform output -raw public_ip)
           PRIVATE_KEY_PATH="private_key.pem"
           echo "::set-output name=public_ip::$PUBLIC_IP"
           echo "::set-output name=private_key_path::$PRIVATE_KEY_PATH"
