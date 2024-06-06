@@ -113,6 +113,6 @@ output "public_ip" {
 }
 
 output "private_key" {
-  value = local_file.private_key.content
+  value = tls_private_key.qed_private_key.private_key_pem
   sensitive = true
 }
