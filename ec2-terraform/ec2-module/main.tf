@@ -71,7 +71,7 @@ resource "aws_security_group" "qed-sg" {
 resource "aws_instance" "qed-instance" {
   ami           = data.aws_ami.ubuntu.image_id
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.my_key_pair.key_name
+  key_name      = "qed-key"
   subnet_id     = aws_subnet.qed_subnet.id
   associate_public_ip_address = true 
 
@@ -88,31 +88,31 @@ resource "aws_instance" "qed-instance" {
 ##############################################################
 
 # create public and private keys
-resource "tls_private_key" "qed_private_key" {
-  algorithm = "RSA"
-  rsa_bits  = 2048  # adjust the key size as needed
-}
+# resource "tls_private_key" "qed_private_key" {
+#   algorithm = "RSA"
+#   rsa_bits  = 2048  # adjust the key size as needed
+# }
 
-resource "aws_key_pair" "my_key_pair" {
-  key_name   = "my-key-pair"
-  public_key = tls_private_key.qed_private_key.public_key_openssh
-}
+# resource "aws_key_pair" "my_key_pair" {
+#   key_name   = "my-key-pair"
+#   public_key = tls_private_key.qed_private_key.public_key_openssh
+# }
 
-resource "local_file" "private_key" {
-  content         = tls_private_key.qed_private_key.private_key_pem
-  filename        = "./private_key.pem"  # save private key in the current directory
-}
+# resource "local_file" "private_key" {
+#   content         = tls_private_key.qed_private_key.private_key_pem
+#   filename        = "./private_key.pem"  # save private key in the current directory
+# }
 
-resource "local_file" "public_key" {
-  content         = tls_private_key.qed_private_key.public_key_openssh
-  filename        = "./public_key.pub"  # save public key in the current directory
-}
+# resource "local_file" "public_key" {
+#   content         = tls_private_key.qed_private_key.public_key_openssh
+#   filename        = "./public_key.pub"  # save public key in the current directory
+# }
 
 output "public_ip" {
   value = aws_instance.qed-instance.public_ip
 }
 
-output "private_key" {
-  value = tls_private_key.qed_private_key.private_key_pem
-  sensitive = true
-}
+# output "private_key" {
+#   value = tls_private_key.qed_private_key.private_key_pem
+#   sensitive = true
+# }

@@ -27,6 +27,7 @@ jobs:
         run: |
           npm install \
           && npm install mocha
+
       - name: Run tests with Mocha
         run: ./node_modules/.bin/mocha app.js
 
@@ -43,6 +44,7 @@ jobs:
         run: |
           sleep 10 # waiting for the container to be up and running
           curl --fail http://localhost:3000 || (docker logs qed-challenge && exit 1)
+
       - name: Clean up
         run: docker stop qed-challenge && docker rm qed-challenge
 
@@ -79,40 +81,33 @@ jobs:
         working-directory: ./ec2-terraform
         run: |
           PUBLIC_IP=$(terraform output -raw public_ip)
-          PRIVATE_KEY_CONTENT=$(terraform output -raw private_key)
-          # Debugging statements
+
+          # Debugging statement
           echo "Extracted Public IP: $PUBLIC_IP"
-          echo "Extracted Private Key Content: $PRIVATE_KEY_CONTENT"
-          # Check if the variables are empty
-          if [[ -z "$PUBLIC_IP" ]]; then
-            echo "Error: PUBLIC_IP is empty"
-            exit 1
-          fi
-          if [[ -z "$PRIVATE_KEY_CONTENT" ]]; then
-            echo "Error: PRIVATE_KEY_CONTENT is empty"
-            exit 1
-          fi
-          # Ensure the ec2-terraform/ec2-module directory exists
-          mkdir -p ./ec2-terraform/ec2-module
-          # Save the private key to a file in the ec2-terraform/ec2-module directory
-          echo "$PRIVATE_KEY_CONTENT" > ./ec2-terraform/ec2-module/private_key.pem
-          chmod 600 ./ec2-terraform/ec2-module/private_key.pem
+
           echo "::set-output name=public_ip::$PUBLIC_IP"
-          echo "::set-output name=private_key_path::./ec2-terraform/ec2-module/private_key.pem"
+
       - name: SSH into EC2 and deploy
         run: |
-          PUBLIC_IP=${{ steps.extract_info.outputs.public_ip }}
-          PRIVATE_KEY_PATH=${{ steps.extract_info.outputs.private_key_path }}
+          PUBLIC_IP="${{ steps.extract_info.outputs.public_ip }}"
+          SSH_PRIVATE_KEY="${{ secrets.SSH_PRIVATE_KEY }}"
+        
           echo "Public IP: $PUBLIC_IP"
-          echo "Private Key Path: $PRIVATE_KEY_PATH"
-          echo "SSH into EC2 instance at $PUBLIC_IP and deploy..."
-          ssh -o StrictHostKeyChecking=no -i $PRIVATE_KEY_PATH ubuntu@$PUBLIC_IP << 'EOF'
+        
+          # Save SSH private key to a file
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+        
+          # SSH into EC2 instance and execute commands
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP << 'EOF'
             sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
             sudo docker stop qed-challenge || true
             sudo docker rm qed-challenge || true
             sudo docker run -d --name qed-challenge -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
           EOF
+        
+          
       - name: Terraform Destroy
         if: failure()
         working-directory: ./ec2-terraform
