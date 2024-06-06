@@ -1,0 +1,121 @@
+name: QED Challenge
+
+on:
+  push:
+    branches:
+      - main
+      - feat2-cicd
+  pull_request:
+    branches:
+      - main
+      - feat2-cicd
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies and tools
+        run: |
+          npm install \
+          && npm install mocha
+
+      - name: Run tests with Mocha
+        run: ./node_modules/.bin/mocha app.js
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        run: docker build . -t qed-challenge
+
+      - name: Run Docker container
+        run: docker run -d --name qed-challenge -p 3000:3000 qed-challenge
+
+      - name: Test Docker container
+        run: |
+          sleep 10 # waiting for the container to be up and running
+          curl --fail http://localhost:3000 || (docker logs qed-challenge && exit 1)
+
+      - name: Clean up
+        run: docker stop qed-challenge && docker rm qed-challenge
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Tag Docker image
+        run: docker tag qed-challenge ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.5
+
+      - name: Terraform Init
+        working-directory: ./ec2-terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./ec2-terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform apply -auto-approve
+
+      - name: Extract Terraform Outputs
+        id: extract_info
+        working-directory: ./ec2-terraform
+        run: |
+          PUBLIC_IP=$(terraform output -raw public_ip)
+
+          # Debugging statement
+          echo "Extracted Public IP: $PUBLIC_IP"
+
+          echo "::set-output name=public_ip::$PUBLIC_IP"
+
+      - name: SSH into EC2 and deploy
+        run: |
+          PUBLIC_IP="$(terraform output -raw public_ip)"
+          SSH_PRIVATE_KEY="${{ secrets.SSH_PRIVATE_KEY }}"
+
+          echo "Public IP: $PUBLIC_IP"
+        
+          # Save SSH private key to a file
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          cat private_key.pem
+    
+          ssh -i private_key.pem ec2-user@$PUBLIC_IP << 'EOF'
+          pwd
+          whoami
+            echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER
+            sudo chmod 440 /etc/sudoers.d/$USER
+          
+            sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
+            sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+            sudo docker stop qed-challenge || true
+            sudo docker rm qed-challenge || true
+            sudo docker run -d --name qed-challenge -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
+          EOF
+        
+      - name: Terraform Destroy
+        if: failure()
+        working-directory: ./ec2-terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform destroy -auto-approve
