@@ -73,8 +73,7 @@ resource "aws_instance" "qed-instance" {
   instance_type = "t2.micro"
   key_name      = "qed-key"
   subnet_id     = aws_subnet.qed_subnet.id
-  associate_public_ip_address = true 
-
+  
   security_groups = [aws_security_group.qed-sg.id]
 
   root_block_device {
@@ -85,9 +84,37 @@ resource "aws_instance" "qed-instance" {
   }
 }
 
+resource "aws_eip" "qed_eip" {
+  instance = aws_instance.qed-instance.id
+  domain = "vpc"
+
+  tags = {
+    Name = "qed-instance-eip"
+  }
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = aws_instance.qed-instance.id
+  allocation_id = aws_eip.qed_eip.id
+}
+
+resource "aws_internet_gateway" "qed_igw" {
+  vpc_id = aws_vpc.qed_vpc.id
+
+  tags = {
+    Name = "qed-igw"
+  }
+}
+
+resource "aws_route" "internet_access" {
+  route_table_id            = aws_vpc.qed_vpc.main_route_table_id
+  destination_cidr_block    = "0.0.0.0/0"
+  gateway_id                = aws_internet_gateway.qed_igw.id
+}
+
 ##############################################################
 
-# create public and private keys
+# # create public and private keys
 # resource "tls_private_key" "qed_private_key" {
 #   algorithm = "RSA"
 #   rsa_bits  = 2048  # adjust the key size as needed

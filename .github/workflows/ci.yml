@@ -89,17 +89,22 @@ jobs:
 
       - name: SSH into EC2 and deploy
         run: |
-          PUBLIC_IP="${{ steps.extract_info.outputs.public_ip }}"
+          PUBLIC_IP="$($(terraform output -raw public_ip))"
           SSH_PRIVATE_KEY="${{ secrets.SSH_PRIVATE_KEY }}"
-        
+
           echo "Public IP: $PUBLIC_IP"
         
           # Save SSH private key to a file
           echo "$SSH_PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-        
-          # SSH into EC2 instance and execute commands
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP << 'EOF'
+          cat private_key.pem
+    
+          ssh -i private_key.pem ec2-user@$PUBLIC_IP << 'EOF'
+          pwd
+          whoami
+            echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER
+            sudo chmod 440 /etc/sudoers.d/$USER
+          
             sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
             sudo docker stop qed-challenge || true
@@ -107,7 +112,6 @@ jobs:
             sudo docker run -d --name qed-challenge -p 3000:3000 ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
           EOF
         
-          
       - name: Terraform Destroy
         if: failure()
         working-directory: ./ec2-terraform

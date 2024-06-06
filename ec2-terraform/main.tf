@@ -9,9 +9,9 @@ module "qed-ec2" {
 
 }
 
-output "public_ip" {
-    value = module.qed-ec2.public_ip
-}
+# output "public_ip" {
+#     value = module.qed-ec2.public_ip
+# }
 
 # output "private_key" {
 #   value = module.qed-ec2.private_key
