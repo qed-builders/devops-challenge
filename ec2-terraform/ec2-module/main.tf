@@ -136,7 +136,7 @@ resource "aws_route" "internet_access" {
 # }
 
 output "public_ip" {
-  value = aws_instance.qed-instance.public_ip
+  value = aws_eip.qed_eip.public_ip
 }
 
 # output "private_key" {
