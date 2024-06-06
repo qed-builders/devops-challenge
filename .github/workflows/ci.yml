@@ -99,7 +99,7 @@ jobs:
           chmod 600 private_key.pem
         
           # SSH into EC2 instance and execute commands
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP << 'EOF'
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$PUBLIC_IP << 'EOF'
             sudo docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/qed-challenge:latest
             sudo docker stop qed-challenge || true
