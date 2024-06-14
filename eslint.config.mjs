@@ -1,15 +1,16 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import pluginReactConfig from "eslint-plugin-react/configs/recommended.js";
-import { fixupConfigRules } from "@eslint/compat";
+import globals from 'globals';
+import pluginJs from '@eslint/js';
+import pluginReactConfig from 'eslint-plugin-react/configs/recommended.js';
+import { fixupConfigRules } from '@eslint/compat';
+import pluginJest from 'eslint-plugin-jest';
 
 export default [
   {
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.node,  // Add Node.js globals
-        commonjs: true    // Add CommonJS globals
+        ...globals.node, 
+        commonjs: true    
       },
       ecmaVersion: 2021,
       sourceType: 'module',
@@ -28,8 +29,17 @@ export default [
   },
   ...fixupConfigRules(pluginReactConfig),
   {
+    files: ["**/__tests__/**/*.js?(x)", "**/?(*.)+(spec|test).[tj]s?(x)"],
+    plugins: {
+      jest: pluginJest,
+    },
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      }
+    },
     rules: {
-      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     }
   }
 ];
