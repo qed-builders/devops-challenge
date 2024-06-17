@@ -17,14 +17,21 @@ jobs:
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          cli_config_credentials_hostname: app.terraform.io
+          terraform_version: latest
+          terraform_wrapper: true
 
       - name: Terraform Init
         run: terraform init
+        working-directory: ./terraform
 
       - name: Terraform Plan
         id: plan
-        run: terraform/terraform plan -out=tfplans -destroy
+        run: terraform plan -out=tfplan
+        working-directory: ./terraform
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform
