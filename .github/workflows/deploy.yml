@@ -27,7 +27,7 @@ jobs:
           terraform_wrapper: true
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -reconfigure
         working-directory: ./terraform
 
       - name: Terraform Plan
