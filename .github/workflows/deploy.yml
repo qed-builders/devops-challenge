@@ -24,7 +24,6 @@ jobs:
 
       - name: Debug AWS Environment
         run: |
-          aws sts get-caller-identity
           aws configure list
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
