@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Check current date and time in UTC
+        run: date -u
       - name: Checkout repository
         uses: actions/checkout@v3  
         
